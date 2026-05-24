@@ -415,7 +415,32 @@ HME.submitAcknowledgment = function() {
 
 HME.detectPlatform();
 HME.setupFileInputEvents();
-HME.checkAcknowledgment();
+
+var _params = new URLSearchParams(window.location.search);
+if (_params.get('mode') === 'web') {
+  // Immediately swap setup screen to loading state
+  var _setupCard = document.querySelector('.setup-card');
+  if (_setupCard) {
+    _setupCard.innerHTML = '<div class="setup-logo">🐴</div>'
+      + '<div class="setup-title">Horsey Map Editor</div>'
+      + '<div class="setup-sub">Loading map data...</div>'
+      + '<div id="setup-status"></div>';
+  }
+  var _ackOverlay = document.getElementById('ack-overlay');
+  if (_ackOverlay) _ackOverlay.style.display = 'none';
+
+  var _base    = _params.get('assets') || '/horsey-source';
+  var _imgBase = _params.get('images') || '/assets/horsey_atlas';
+  HME.loadFromWeb({
+    tmxUrl:          _base + '/horsey.tmx',
+    terrainXmlUrl:   _base + '/terrain.xml',
+    locsXmlUrl:      _base + '/locs.xml',
+    terrainPngUrl:   _imgBase + '/terrain.png',
+    locsPngUrl:      _imgBase + '/locs.png',
+  });
+} else {
+  HME.checkAcknowledgment();
+}
 
 document.addEventListener('click', () => {
   if (HME.closePaintDropdown) HME.closePaintDropdown();

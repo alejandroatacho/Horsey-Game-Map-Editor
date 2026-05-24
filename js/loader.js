@@ -125,6 +125,61 @@ HME.openNewFiles = function() {
   document.getElementById('folder-input').click();
 };
 
+HME.loadFromWeb = async function(config) {
+  var statusEl = document.getElementById('setup-status');
+  if (statusEl) statusEl.textContent = 'Loading map data…';
+
+  try {
+    var results = await Promise.all([
+      fetch(config.tmxUrl).then(function(r) { return r.text(); }),
+      fetch(config.terrainXmlUrl).then(function(r) { return r.text(); }),
+      fetch(config.locsXmlUrl).then(function(r) { return r.text(); }),
+    ]);
+
+    var tmxText        = results[0];
+    var terrainXmlText = results[1];
+    var locsXmlText    = results[2];
+
+    HME.state.originalTMX = tmxText;
+    HME.parseTMX(tmxText);
+
+    var SPAWNER_EXCEPTIONS = new Set([145, 153]);
+    HME._requiredLocGIDs = new Set(
+      HME.state.map.objects
+        .filter(function(o) { return !HME.SPAWNER_GIDS[o.gid] || SPAWNER_EXCEPTIONS.has(o.gid); })
+        .map(function(o) { return o.gid; })
+    );
+
+    HME.terrainAtlas = HME.parseAtlasXML(terrainXmlText);
+    HME.locsAtlas    = HME.parseAtlasXML(locsXmlText, 8, 256, 256, 32, 32);
+
+    var loadImg = function(url) {
+      return new Promise(function(resolve, reject) {
+        var img    = new Image();
+        img.onload  = function() { resolve(img); };
+        img.onerror = reject;
+        img.src     = url;
+      });
+    };
+
+    var imgs = await Promise.all([
+      loadImg(config.terrainPngUrl),
+      loadImg(config.locsPngUrl),
+    ]);
+
+    HME.state.terrainImg = imgs[0];
+    HME.state.locsImg    = imgs[1];
+
+    HME.initEditor();
+  } catch (e) {
+    if (statusEl) {
+      statusEl.textContent = 'Web load failed — use the file picker instead.';
+      statusEl.className   = 'error';
+    }
+    console.error('Web mode load error:', e);
+  }
+};
+
 HME.doSaveAs = function() {
   HME.showInstallMapModal(false);
 };
