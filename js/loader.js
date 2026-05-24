@@ -130,10 +130,17 @@ HME.loadFromWeb = async function(config) {
   if (statusEl) statusEl.textContent = 'Loading map data…';
 
   try {
+    var fetchText = function(url) {
+      return fetch(url).then(function(r) {
+        if (!r.ok) throw new Error(url + ' returned HTTP ' + r.status);
+        return r.text();
+      });
+    };
+
     var results = await Promise.all([
-      fetch(config.tmxUrl).then(function(r) { return r.text(); }),
-      fetch(config.terrainXmlUrl).then(function(r) { return r.text(); }),
-      fetch(config.locsXmlUrl).then(function(r) { return r.text(); }),
+      fetchText(config.tmxUrl),
+      fetchText(config.terrainXmlUrl),
+      fetchText(config.locsXmlUrl),
     ]);
 
     var tmxText        = results[0];

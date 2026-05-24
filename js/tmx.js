@@ -1,5 +1,9 @@
 'use strict';
 
+HME.escapeXml = function(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+};
+
 HME.parseTMX = function(xml) {
   const doc = new DOMParser().parseFromString(xml, 'text/xml');
   const m   = doc.querySelector('map');
@@ -79,18 +83,18 @@ HME.serializeTMX = function() {
     if (propKeys.length) {
       const propsXML = propKeys.map(k => {
         const t = o.propMeta && o.propMeta[k];
-        const typeAttr = t ? ` type="${t}"` : '';
-        return `    <property name="${k}"${typeAttr} value="${o.properties[k]}"/>`;
+        const typeAttr = t ? ` type="${HME.escapeXml(t)}"` : '';
+        return `    <property name="${HME.escapeXml(k)}"${typeAttr} value="${HME.escapeXml(o.properties[k])}"/>`;
       }).join('\n');
-      return `  <object id="${o.id}" type="${o.type}" gid="${o.gid}" x="${o.x}" y="${o.y}" width="${o.width}" height="${o.height}">\n   <properties>\n${propsXML}\n   </properties>\n  </object>`;
+      return `  <object id="${o.id}" type="${HME.escapeXml(o.type)}" gid="${o.gid}" x="${o.x}" y="${o.y}" width="${o.width}" height="${o.height}">\n   <properties>\n${propsXML}\n   </properties>\n  </object>`;
     }
-    return `  <object id="${o.id}" type="${o.type}" gid="${o.gid}" x="${o.x}" y="${o.y}" width="${o.width}" height="${o.height}"/>`;
+    return `  <object id="${o.id}" type="${HME.escapeXml(o.type)}" gid="${o.gid}" x="${o.x}" y="${o.y}" width="${o.width}" height="${o.height}"/>`;
   }).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<map version="${m.version}" tiledversion="${m.tiledversion}" orientation="${m.orientation}" renderorder="${m.renderorder}" width="${m.width}" height="${m.height}" tilewidth="${m.tilewidth}" tileheight="${m.tileheight}" infinite="${m.infinite}" nextlayerid="${m.nextlayerid}" nextobjectid="${m.objects.reduce((max, o) => Math.max(max, o.id), 0) + 1}">
- ${m.tilesets.map(ts => `<tileset firstgid="${ts.firstgid}" source="${ts.source}"/>`).join('\n ')}
- <layer id="${l.id}" name="${l.name}" width="${l.width}" height="${l.height}">
+<map version="${HME.escapeXml(m.version)}" tiledversion="${HME.escapeXml(m.tiledversion)}" orientation="${HME.escapeXml(m.orientation)}" renderorder="${HME.escapeXml(m.renderorder)}" width="${m.width}" height="${m.height}" tilewidth="${m.tilewidth}" tileheight="${m.tileheight}" infinite="${m.infinite}" nextlayerid="${m.nextlayerid}" nextobjectid="${m.objects.reduce((max, o) => Math.max(max, o.id), 0) + 1}">
+ ${m.tilesets.map(ts => `<tileset firstgid="${ts.firstgid}" source="${HME.escapeXml(ts.source)}"/>`).join('\n ')}
+ <layer id="${l.id}" name="${HME.escapeXml(l.name)}" width="${l.width}" height="${l.height}">
   <data encoding="csv">
 ${rows.join('\n')}
   </data>
